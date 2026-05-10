@@ -1,0 +1,6 @@
+# Reduce noisy merge conflicts in frequently appended docs
+README.md merge=union
+project.md merge=union
+
+# Keep generated build artifacts out of line-ending churn if ever committed
+*.map -text
