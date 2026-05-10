@@ -1,8 +1,8 @@
 # LeetCode GitHub Organizer
 
-Production-ready Plasmo + React + TypeScript Chrome extension that detects accepted LeetCode submissions and uploads them into topic-based folders in GitHub.
+Chrome extension (Plasmo + React + TypeScript) that detects **Accepted** LeetCode submissions and uploads them to GitHub in topic-based folders.
 
-## 1) Project setup
+## Install & run
 
 ```bash
 npm install
@@ -10,61 +10,59 @@ cp .env.example .env
 npm run dev
 ```
 
-## 2) Folder structure
+Load extension from `build/chrome-mv3-dev` in Chrome.
 
-- `background.ts` / `src/background`: service worker orchestration
-- `content.ts` / `src/contents`: LeetCode page detection and metadata extraction
-- `popup.tsx` / `src/popup`: extension popup UI and settings
-- `src/services/github`: GitHub REST client and upload orchestration
-- `src/services/leetcode`: LeetCode GraphQL client + metadata fetch
-- `src/utils`: storage and sanitization helpers
-- `src/types`: shared TypeScript domain models
-- `src/constants`: message, storage, endpoint constants
+## How to create a GitHub token (fine-grained recommended)
 
-## 3) Dependencies
+1. Go to GitHub **Settings**.
+2. Open **Developer settings** (left sidebar).
+3. Click **Personal access tokens**.
+4. Choose one:
+   - **Fine-grained tokens** (recommended)
+   - **Tokens (classic)** (fallback)
+5. Click **Generate new token**.
+6. Set expiration (for example 90 days).
+7. Repository access:
+   - select **Only select repositories**
+   - choose your target LeetCode solutions repository
+8. Required permissions:
+   - **Contents: Read and write**
+   - **Metadata: Read-only**
+9. Generate token and **copy it once** (GitHub does not show it again).
+10. Open extension popup and paste token in **GitHub Token**.
 
-- Core: `plasmo`, `react`, `react-dom`, `typescript`
-- Styling: `tailwindcss`, `postcss`, `autoprefixer`
-- Tooling: `eslint`, `@types/chrome`, `@types/react`, `@types/react-dom`
-- Validation: `zod`
+> Security: Never share token in screenshots, commits, or logs.
 
-## 4) Manifest setup (MV3)
+## How to use extension (new workflow)
 
-Manifest is configured via `package.json` (`manifest` key):
-- `manifest_version: 3`
-- `background.service_worker: background.js`
-- Permissions: `storage`, `tabs`
-- Host permissions: LeetCode and GitHub API domains
+1. Open extension popup.
+2. Fill GitHub Token, Owner, Repo and click **Save Settings**.
+3. Solve a LeetCode problem and submit.
+4. On accepted submission page, extension auto-detects metadata.
+5. Click the floating **Push to GitHub** button shown on the LeetCode page (no popup reopen needed).
+6. Enter Time Complexity and Space Complexity in prompts.
+7. Extension uploads and commits automatically.
 
-## 5) Basic extension bootstrapping
+Result path:
+- `leetcode-solutions/<Primary Topic>/<ProblemName>.ext`
+- duplicates become `ProblemName2.ext`, `ProblemName3.ext`, etc.
 
-- `content.ts`: injects LeetCode observer logic.
-- `background.ts`: binds message handlers and upload flow.
-- `popup.tsx`: renders settings UI and recent upload history.
-- `options.tsx`: placeholder options page.
+## Architecture
 
-## End-to-end flow
+- `src/contents/leetcode.ts` — detection + on-page push button + upload trigger
+- `src/services/leetcode/*` — GraphQL metadata extraction
+- `src/background/index.ts` — upload orchestration, retry, dedupe
+- `src/services/github/*` — token/repo validation + upload
+- `src/popup/index.tsx` — settings and upload history
+- `src/utils/*` — storage, validation, retry, error helpers
 
-1. Content script watches submission UI using `MutationObserver`.
-2. On Accepted, script extracts slug/runtime/memory/code/language and fetches difficulty/tags from LeetCode GraphQL.
-3. User is prompted for TC/SC.
-4. Payload is sent to background service worker.
-5. Background validates settings and uploads using GitHub Contents API.
-6. Filename collision strategy appends numeric suffix (`Two Sum2.cpp`, etc.).
-7. Upload result is persisted to `chrome.storage.local` and shown in popup history.
+## Debugging and testing
 
-## Build and checks
-
-```bash
-npm run typecheck
-npm run build
-npm run package
-```
-
-## Security best practices
-
-- Use a classic PAT with minimum scopes (`repo` only when private repo needed).
-- Store token only in `chrome.storage.local`, never hardcode.
-- Restrict host permissions to only required domains.
-- Validate all settings before upload (recommended next step: add `zod` schema validation at save time).
-- Add token masking and redaction in logs for production release.
+- Inspect content script in LeetCode tab DevTools.
+- Inspect service worker via `chrome://extensions` > service worker.
+- Test cases:
+  - invalid token (expect clear error)
+  - missing repo (404)
+  - duplicate submissions (file suffix increment)
+  - rate limit (retry path)
+  - refresh accepted page (no duplicate upload)

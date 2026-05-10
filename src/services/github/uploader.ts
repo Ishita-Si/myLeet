@@ -1,48 +1,72 @@
-import type { ComplexityInput, LeetCodeProblemMetadata } from "~types"
+import type { ComplexityInput, GithubConfig, LeetCodeProblemMetadata } from "~types"
 import { sanitizeFilename, toTitleCase } from "~utils/sanitize"
 import { GithubClient } from "./client"
-import type { GithubConfig } from "~types"
 
 const extensionFromLanguage = (language: string): string => {
   const map: Record<string, string> = { "C++": "cpp", Python3: "py", Java: "java", JavaScript: "js", TypeScript: "ts" }
   return map[language] ?? "txt"
 }
 
-export const buildFileBody = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string => `/*
-Question: ${metadata.title}
-Difficulty: ${metadata.difficulty}
-Language: ${metadata.language}
+const buildHeaderLines = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string[] => [
+  `Question: ${metadata.title}`,
+  `Difficulty: ${metadata.difficulty}`,
+  "",
+  "Topics:",
+  ...metadata.topicTags.map((tag) => `- ${tag}`),
+  "",
+  `Language: ${metadata.language}`,
+  "",
+  `Time Complexity: ${complexity.timeComplexity}`,
+  `Space Complexity: ${complexity.spaceComplexity}`,
+  "",
+  `Runtime: ${metadata.runtime}`,
+  `Memory: ${metadata.memory}`,
+  "",
+  "Link:",
+  metadata.url,
+]
 
-Time Complexity: ${complexity.timeComplexity}
-Space Complexity: ${complexity.spaceComplexity}
+const buildCommentHeader = (ext: string, lines: string[]): string => {
+  if (ext === "py" || ext === "rb" || ext === "sh" || ext === "yml" || ext === "yaml") {
+    return lines.map((line) => (line ? `# ${line}` : "#")).join("\n")
+  }
 
-Runtime: ${metadata.runtime}
-Memory: ${metadata.memory}
+  return `/*\n${lines.join("\n")}\n*/`
+}
 
-Topics:
-${metadata.topicTags.map((tag) => `- ${tag}`).join("\n")}
+export const buildCommitMessage = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string =>
+  `Solved: ${metadata.title}\n\nLanguage: ${metadata.language}\nRuntime: ${metadata.runtime}\nMemory: ${metadata.memory}\nTC: ${complexity.timeComplexity}\nSC: ${complexity.spaceComplexity}`
 
-Link:
-${metadata.url}
-*/
+export const buildFileBody = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string => {
+  const ext = extensionFromLanguage(metadata.language)
+  const header = buildCommentHeader(ext, buildHeaderLines(metadata, complexity))
 
-${metadata.code}
-`
+  return `${header}\n\n${metadata.code}\n`
+}
+
+const nextFileName = (existingNames: string[], baseName: string, ext: string): string => {
+  let suffix = 1
+  let candidate = `${baseName}.${ext}`
+  while (existingNames.includes(candidate)) {
+    suffix += 1
+    candidate = `${baseName}${suffix}.${ext}`
+  }
+  return candidate
+}
 
 export const uploadSubmission = async (config: GithubConfig, metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): Promise<string> => {
   const client = new GithubClient(config)
-  const primaryTopic = toTitleCase(metadata.topicTags[0] ?? "Uncategorized")
-  const baseName = sanitizeFilename(metadata.title)
+  await client.validateTokenAndRepo()
+
+  const folder = toTitleCase(metadata.topicTags[0] ?? "Uncategorized")
+  const directory = `${config.basePath}/${sanitizeFilename(folder)}`
   const ext = extensionFromLanguage(metadata.language)
+  const baseName = sanitizeFilename(metadata.title)
 
-  let counter = 1
-  let candidate = `${config.basePath}/${primaryTopic}/${baseName}.${ext}`
-  while (await client.getFile(candidate)) {
-    counter += 1
-    candidate = `${config.basePath}/${primaryTopic}/${baseName}${counter}.${ext}`
-  }
+  const existing = await client.getDirectory(directory)
+  const fileName = nextFileName(existing.filter((item) => item.type === "file").map((item) => item.name), baseName, ext)
+  const filePath = `${directory}/${fileName}`
 
-  const commitMessage = `Solved: ${metadata.title}\n\nLanguage: ${metadata.language}\nRuntime: ${metadata.runtime}\nMemory: ${metadata.memory}\nTC: ${complexity.timeComplexity}\nSC: ${complexity.spaceComplexity}`
-  await client.putFile(candidate, buildFileBody(metadata, complexity), commitMessage)
-  return candidate
+  await client.putFile(filePath, buildFileBody(metadata, complexity), buildCommitMessage(metadata, complexity))
+  return filePath
 }

@@ -1,7 +1,5 @@
 export type Difficulty = "Easy" | "Medium" | "Hard"
 
-export type SupportedLanguage = "cpp" | "python" | "java" | "javascript" | "typescript"
-
 export interface LeetCodeProblemMetadata {
   title: string
   slug: string
@@ -11,6 +9,7 @@ export interface LeetCodeProblemMetadata {
   code: string
   runtime: string
   memory: string
+  submissionId: string
   submittedAtIso: string
   url: string
 }
@@ -20,12 +19,24 @@ export interface ComplexityInput {
   spaceComplexity: string
 }
 
+export interface PendingSubmission {
+  metadata: LeetCodeProblemMetadata
+  detectedAtIso: string
+}
+
 export interface GithubConfig {
   token: string
   owner: string
   repo: string
   branch: string
   basePath: string
+}
+
+export interface ExtensionSettings {
+  github: GithubConfig
+  autoUploadEnabled: boolean
+  askComplexityOnAccepted: boolean
+  maxUploadRetries: number
 }
 
 export interface UploadRecord {
@@ -37,7 +48,7 @@ export interface UploadRecord {
   message: string
 }
 
-export interface ExtensionSettings {
-  github: GithubConfig
-  autoUploadEnabled: boolean
+export interface UploadRequest {
+  metadata: LeetCodeProblemMetadata
+  complexity: ComplexityInput
 }

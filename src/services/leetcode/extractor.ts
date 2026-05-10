@@ -1,28 +1,66 @@
 import { leetcodeGraphql } from "./client"
+import { AppError } from "~utils/errors"
 import type { LeetCodeProblemMetadata } from "~types"
 
-interface QuestionResp { question: { difficulty: "Easy" | "Medium" | "Hard"; topicTags: Array<{ name: string; slug: string }> } }
+interface SubmissionDetailData {
+  submissionDetails: {
+    id: string
+    lang: string
+    runtime: string
+    memory: string
+    code: string
+    timestamp: string
+    question: {
+      title: string
+      titleSlug: string
+      difficulty: "Easy" | "Medium" | "Hard"
+      topicTags: Array<{ name: string }>
+    }
+  }
+}
 
-export const fetchProblemMetadata = async (
-  slug: string,
-  code: string,
-  language: string,
-  runtime: string,
-  memory: string
-): Promise<LeetCodeProblemMetadata> => {
-  const query = `query questionData($titleSlug: String!) { question(titleSlug: $titleSlug) { difficulty topicTags { name slug } } }`
-  const result = await leetcodeGraphql<QuestionResp>({ query, variables: { titleSlug: slug }, operationName: "questionData" })
-  const title = document.title.replace(" - LeetCode", "")
+const query = `
+query submissionDetails($submissionId: Int!) {
+  submissionDetails(submissionId: $submissionId) {
+    id
+    lang
+    runtime
+    memory
+    code
+    timestamp
+    question {
+      title
+      titleSlug
+      difficulty
+      topicTags { name }
+    }
+  }
+}`
+
+export const fetchSubmissionMetadata = async (submissionId: string): Promise<LeetCodeProblemMetadata> => {
+  const numericId = Number(submissionId)
+  if (Number.isNaN(numericId)) throw new AppError("Invalid submission id", "VALIDATION")
+
+  const data = await leetcodeGraphql<SubmissionDetailData>({
+    query,
+    variables: { submissionId: numericId },
+    operationName: "submissionDetails"
+  })
+
+  const details = data.submissionDetails
+  if (!details?.question?.titleSlug) throw new AppError("Submission metadata unavailable", "VALIDATION")
+
   return {
-    title,
-    slug,
-    difficulty: result.question.difficulty,
-    topicTags: result.question.topicTags.map((tag) => tag.name),
-    language,
-    code,
-    runtime,
-    memory,
-    submittedAtIso: new Date().toISOString(),
-    url: window.location.href
+    title: details.question.title,
+    slug: details.question.titleSlug,
+    difficulty: details.question.difficulty,
+    topicTags: details.question.topicTags.map((tag) => tag.name),
+    language: details.lang,
+    code: details.code,
+    runtime: details.runtime,
+    memory: details.memory,
+    submissionId: details.id,
+    submittedAtIso: new Date(Number(details.timestamp) * 1000).toISOString(),
+    url: `https://leetcode.com/problems/${details.question.titleSlug}/`
   }
 }
