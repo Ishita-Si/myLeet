@@ -17,7 +17,7 @@
 
 ## Upload Workflow
 - Content script stores pending submission.
-- Popup asks TC/SC and triggers background upload.
+- On-page floating "Push to GitHub" button asks TC/SC and triggers background upload.
 - Background deduplicates in-flight uploads and retries transient failures.
 
 ## File Organization
