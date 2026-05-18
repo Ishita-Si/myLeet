@@ -6,8 +6,10 @@ export const withRetry = async <T>(fn: () => Promise<T>, retries: number): Promi
       return await fn()
     } catch (error) {
       lastError = error
-      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
       attempt += 1
+      if (attempt <= retries) {
+        await new Promise((resolve) => setTimeout(resolve, 500 * attempt))
+      }
     }
   }
   throw lastError
