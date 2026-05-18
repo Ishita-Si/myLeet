@@ -2,18 +2,11 @@ import "./style.css"
 import { useEffect, useMemo, useState } from "react"
 import { STORAGE_KEYS, MESSAGE_TYPES } from "~constants"
 import type { ComplexityInput, ExtensionSettings, PendingSubmission, UploadRecord } from "~types"
-import { setSettings } from "~utils/storage"
+import { defaultSettings, setSettings } from "~utils/storage"
 import { complexitySchema, githubSettingsSchema } from "~utils/validation"
 
-const defaults: ExtensionSettings = {
-  autoUploadEnabled: true,
-  askComplexityOnAccepted: true,
-  maxUploadRetries: 2,
-  github: { token: "", owner: "", repo: "", branch: "main", basePath: "leetcode-solutions" }
-}
-
 export default function Popup() {
-  const [settings, setLocalSettings] = useState<ExtensionSettings>(defaults)
+  const [settings, setLocalSettings] = useState<ExtensionSettings>(defaultSettings)
   const [uploads, setUploads] = useState<UploadRecord[]>([])
   const [pending, setPending] = useState<PendingSubmission | null>(null)
   const [complexity, setComplexity] = useState<ComplexityInput>({ timeComplexity: "O(n)", spaceComplexity: "O(1)" })
