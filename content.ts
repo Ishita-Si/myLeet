@@ -1,1 +1,1 @@
-import "~src/contents/leetcode"
+import "~/contents/leetcode"
