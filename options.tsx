@@ -1,3 +1,3 @@
-import OptionsPage from "~src/options"
+import OptionsPage from "~/options"
 
 export default OptionsPage
