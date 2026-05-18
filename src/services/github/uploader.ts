@@ -27,7 +27,7 @@ const buildHeaderLines = (metadata: LeetCodeProblemMetadata, complexity: Complex
 ]
 
 const buildCommentHeader = (ext: string, lines: string[]): string => {
-  if (ext === "py" || ext === "rb" || ext === "sh" || ext === "yml" || ext === "yaml") {
+  if (ext === "py" || ext === "rb") {
     return lines.map((line) => (line ? `# ${line}` : "#")).join("\n")
   }
 

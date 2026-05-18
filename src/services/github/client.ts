@@ -21,6 +21,7 @@ export class GithubClient {
     if (response.status === 401) throw new AppError("Invalid GitHub token", "INVALID_TOKEN")
     if (response.status === 404) throw new AppError("Repository or path not found", "REPO_NOT_FOUND")
     if (response.status === 403) throw new AppError("GitHub API rate limited", "RATE_LIMIT", true)
+    if (response.status === 422) throw new AppError("GitHub request validation failed", "VALIDATION")
     if (!response.ok) throw new AppError(`GitHub request failed (${response.status})`, "NETWORK", true)
     return response
   }

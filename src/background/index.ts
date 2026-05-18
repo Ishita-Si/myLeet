@@ -75,7 +75,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return
     }
 
-    if (message.type === "GET_PENDING_SUBMISSION") {
+    if (message.type === MESSAGE_TYPES.GET_PENDING_SUBMISSION) {
       sendResponse({ ok: true, pending: await getPendingSubmission() })
     }
   })()
