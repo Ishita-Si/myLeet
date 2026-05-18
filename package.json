@@ -33,8 +33,7 @@
     "version": "1.0.0",
     "description": "Auto-upload accepted LeetCode submissions to GitHub",
     "permissions": [
-      "storage",
-      "tabs"
+      "storage"
     ],
     "host_permissions": [
       "https://leetcode.com/*",
