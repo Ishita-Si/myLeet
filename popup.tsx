@@ -1,3 +1,3 @@
-import Popup from "~src/popup"
+import Popup from "~/popup"
 
 export default Popup
