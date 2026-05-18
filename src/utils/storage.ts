@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from "~constants"
 import type { ExtensionSettings, PendingSubmission, UploadRecord } from "~types"
 
-const defaultSettings: ExtensionSettings = {
+export const defaultSettings: ExtensionSettings = {
   autoUploadEnabled: true,
   askComplexityOnAccepted: true,
   maxUploadRetries: 2,

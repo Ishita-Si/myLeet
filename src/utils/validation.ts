@@ -1,4 +1,4 @@
-import { z } from "zod"
+import * as z from "zod"
 
 export const complexitySchema = z.object({
   timeComplexity: z.string().min(2).max(40),

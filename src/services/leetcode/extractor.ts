@@ -5,7 +5,7 @@ import type { LeetCodeProblemMetadata } from "~types"
 interface SubmissionDetailData {
   submissionDetails: {
     id: string
-    lang: string
+    lang: { name: string; verboseName: string }
     runtime: string
     memory: string
     code: string
@@ -23,7 +23,7 @@ const query = `
 query submissionDetails($submissionId: Int!) {
   submissionDetails(submissionId: $submissionId) {
     id
-    lang
+    lang { name verboseName }
     runtime
     memory
     code
@@ -55,7 +55,7 @@ export const fetchSubmissionMetadata = async (submissionId: string): Promise<Lee
     slug: details.question.titleSlug,
     difficulty: details.question.difficulty,
     topicTags: details.question.topicTags.map((tag) => tag.name),
-    language: details.lang,
+    language: details.lang.name,
     code: details.code,
     runtime: details.runtime,
     memory: details.memory,

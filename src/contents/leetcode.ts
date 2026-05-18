@@ -8,11 +8,40 @@ const BUTTON_ID = "leetcode-github-organizer-upload-btn"
 let currentPending: PendingSubmission | null = null
 
 const getSubmissionIdFromLocation = (): string | null => {
-  const match = window.location.pathname.match(/submissions\/detail\/(\d+)/)
-  return match?.[1] ?? null
+  const ids: number[] = []
+
+  // 1. From URL pathname
+  const direct = window.location.pathname.match(/submissions\/(?:detail\/)?(\d+)/)
+  if (direct?.[1]) ids.push(Number(direct[1]))
+
+  // 2. From query string
+  const fromQuery = new URLSearchParams(window.location.search).get("submissionId")
+  if (fromQuery) ids.push(Number(fromQuery))
+
+  // 3. From all links
+  const links = document.querySelectorAll<HTMLAnchorElement>('a[href*="/submissions/"]')
+  links.forEach(link => {
+    const match = link.href.match(/submissions\/(?:detail\/)?(\d+)/)
+    if (match?.[1]) ids.push(Number(match[1]))
+  })
+
+  // 4. From page text
+  const textMatches = document.body.innerHTML.matchAll(/submission[^0-9]{0,20}(\d{6,})/gi)
+  for (const match of textMatches) {
+    if (match[1]) ids.push(Number(match[1]))
+  }
+
+  if (ids.length === 0) return null
+
+  // Return the maximum ID (most recent)
+  const maxId = Math.max(...ids.filter(id => !Number.isNaN(id)))
+  return maxId > 0 ? maxId.toString() : null
 }
 
-const isAcceptedVisible = (): boolean => /Accepted/i.test(document.body.innerText)
+const isAcceptedVisible = (): boolean => {
+  const text = document.body.innerText
+  return /Accepted|Success|Runtime|Memory/i.test(text)
+}
 
 const removeButton = () => {
   document.getElementById(BUTTON_ID)?.remove()
@@ -75,7 +104,8 @@ const createUploadButton = () => {
 
 const detectAndEmit = async (): Promise<void> => {
   const submissionId = getSubmissionIdFromLocation()
-  if (!submissionId || !isAcceptedVisible()) return
+  if (!isAcceptedVisible()) return
+  if (!submissionId) return
 
   try {
     const lastId = await getLastSubmissionId()
@@ -92,7 +122,27 @@ const detectAndEmit = async (): Promise<void> => {
   } catch (error) {
     currentPending = null
     removeButton()
+    
+    if (error instanceof Error && error.message.includes("Extension context invalidated")) {
+      console.warn("Extension was updated. Please refresh the page to continue using the extension.")
+      return
+    }
+
     console.error(`Failed to detect and emit LeetCode submission ${submissionId}.`, error)
+  }
+}
+const patchHistoryEvents = () => {
+  const rawPush = history.pushState
+  const rawReplace = history.replaceState
+
+  history.pushState = function (...args) {
+    rawPush.apply(this, args as any)
+    scheduleDetection()
+  }
+
+  history.replaceState = function (...args) {
+    rawReplace.apply(this, args as any)
+    scheduleDetection()
   }
 }
 
@@ -110,4 +160,5 @@ window.addEventListener("popstate", () => {
   scheduleDetection()
 })
 window.addEventListener("load", scheduleDetection)
+patchHistoryEvents()
 scheduleDetection()

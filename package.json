@@ -7,7 +7,9 @@
     "build": "plasmo build",
     "package": "plasmo package",
     "lint": "eslint . --ext .ts,.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "clean": "node -e \"const fs=require('fs'); for (const d of ['.plasmo','build']) fs.rmSync(d,{recursive:true,force:true}); console.log('cleaned .plasmo and build')\"",
+    "build:clean": "npm run clean && plasmo build"
   },
   "dependencies": {
     "plasmo": "^0.90.0",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.0.292",
+    "@types/node": "^25.9.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
