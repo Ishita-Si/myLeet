@@ -7,30 +7,42 @@ const extensionFromLanguage = (language: string): string => {
   return map[language] ?? "txt"
 }
 
+const buildHeaderLines = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string[] => [
+  `Question: ${metadata.title}`,
+  `Difficulty: ${metadata.difficulty}`,
+  "",
+  "Topics:",
+  ...metadata.topicTags.map((tag) => `- ${tag}`),
+  "",
+  `Language: ${metadata.language}`,
+  "",
+  `Time Complexity: ${complexity.timeComplexity}`,
+  `Space Complexity: ${complexity.spaceComplexity}`,
+  "",
+  `Runtime: ${metadata.runtime}`,
+  `Memory: ${metadata.memory}`,
+  "",
+  "Link:",
+  metadata.url,
+]
+
+const buildCommentHeader = (ext: string, lines: string[]): string => {
+  if (ext === "py" || ext === "rb" || ext === "sh" || ext === "yml" || ext === "yaml") {
+    return lines.map((line) => (line ? `# ${line}` : "#")).join("\n")
+  }
+
+  return `/*\n${lines.join("\n")}\n*/`
+}
+
 export const buildCommitMessage = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string =>
   `Solved: ${metadata.title}\n\nLanguage: ${metadata.language}\nRuntime: ${metadata.runtime}\nMemory: ${metadata.memory}\nTC: ${complexity.timeComplexity}\nSC: ${complexity.spaceComplexity}`
 
-export const buildFileBody = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string => `/*
-Question: ${metadata.title}
-Difficulty: ${metadata.difficulty}
+export const buildFileBody = (metadata: LeetCodeProblemMetadata, complexity: ComplexityInput): string => {
+  const ext = extensionFromLanguage(metadata.language)
+  const header = buildCommentHeader(ext, buildHeaderLines(metadata, complexity))
 
-Topics:
-${metadata.topicTags.map((tag) => `- ${tag}`).join("\n")}
-
-Language: ${metadata.language}
-
-Time Complexity: ${complexity.timeComplexity}
-Space Complexity: ${complexity.spaceComplexity}
-
-Runtime: ${metadata.runtime}
-Memory: ${metadata.memory}
-
-Link:
-${metadata.url}
-*/
-
-${metadata.code}
-`
+  return `${header}\n\n${metadata.code}\n`
+}
 
 const nextFileName = (existingNames: string[], baseName: string, ext: string): string => {
   let suffix = 1

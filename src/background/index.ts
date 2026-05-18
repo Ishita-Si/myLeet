@@ -1,4 +1,5 @@
 import { MESSAGE_TYPES } from "~constants"
+import { GithubClient } from "~services/github/client"
 import { uploadSubmission } from "~services/github/uploader"
 import { toAppError } from "~utils/errors"
 import { withRetry } from "~utils/retry"
@@ -45,6 +46,18 @@ const uploadNow = async (payload: UploadRequest) => {
   }
 }
 
+const validateGithub = async () => {
+  try {
+    const settings = await getSettings()
+    const client = new GithubClient(settings.github)
+    await client.validateTokenAndRepo()
+    return { ok: true as const }
+  } catch (error) {
+    const appError = toAppError(error)
+    return { ok: false as const, error: appError.message, code: appError.code }
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   ;(async () => {
     if (message.type === MESSAGE_TYPES.PENDING_SUBMISSION) {
@@ -58,13 +71,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
 
     if (message.type === MESSAGE_TYPES.VALIDATE_GITHUB) {
-      const settings = await getSettings()
-      try {
-        await uploadSubmission(settings.github, message.payload.metadata, message.payload.complexity)
-      } catch {
-        // noop validation endpoint placeholder
-      }
-      sendResponse({ ok: true })
+      sendResponse(await validateGithub())
       return
     }
 
