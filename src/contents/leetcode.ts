@@ -77,17 +77,23 @@ const detectAndEmit = async (): Promise<void> => {
   const submissionId = getSubmissionIdFromLocation()
   if (!submissionId || !isAcceptedVisible()) return
 
-  const lastId = await getLastSubmissionId()
-  if (lastId === submissionId) return
+  try {
+    const lastId = await getLastSubmissionId()
+    if (lastId === submissionId) return
 
-  const metadata = await fetchSubmissionMetadata(submissionId)
-  await markLastSubmissionId(submissionId)
+    const metadata = await fetchSubmissionMetadata(submissionId)
+    await markLastSubmissionId(submissionId)
 
-  currentPending = { metadata, detectedAtIso: new Date().toISOString() }
-  await setPendingSubmission(currentPending)
-  await chrome.runtime.sendMessage({ type: MESSAGE_TYPES.PENDING_SUBMISSION, payload: currentPending })
+    currentPending = { metadata, detectedAtIso: new Date().toISOString() }
+    await setPendingSubmission(currentPending)
+    await chrome.runtime.sendMessage({ type: MESSAGE_TYPES.PENDING_SUBMISSION, payload: currentPending })
 
-  createUploadButton()
+    createUploadButton()
+  } catch (error) {
+    currentPending = null
+    removeButton()
+    console.error(`Failed to detect and emit LeetCode submission ${submissionId}.`, error)
+  }
 }
 
 let timer: number | null = null
