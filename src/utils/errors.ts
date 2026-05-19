@@ -20,3 +20,4 @@ export const toAppError = (error: unknown): AppError => {
   if (error instanceof Error) return new AppError(error.message, "UNKNOWN", false)
   return new AppError("Unexpected error", "UNKNOWN", false)
 }
+// ..
