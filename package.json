@@ -1,5 +1,5 @@
 {
-  "name": "leetcode-github-organizer",
+  "name": "myleet",
   "version": "1.0.0",
   "description": "Chrome extension to auto-upload accepted LeetCode submissions to GitHub",
   "scripts": {
@@ -32,7 +32,7 @@
   },
   "manifest": {
     "manifest_version": 3,
-    "name": "LeetCode GitHub Organizer",
+    "name": "myLeet",
     "version": "1.0.0",
     "description": "Auto-upload accepted LeetCode submissions to GitHub",
     "permissions": [

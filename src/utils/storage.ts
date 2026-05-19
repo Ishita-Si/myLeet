@@ -5,12 +5,25 @@ export const defaultSettings: ExtensionSettings = {
   autoUploadEnabled: true,
   askComplexityOnAccepted: true,
   maxUploadRetries: 2,
-  github: { token: "", owner: "", repo: "", branch: "main", basePath: "leetcode-solutions" }
+  github: { token: "", owner: "", repo: "", branch: "main", basePath: "" }
 }
 
 export const getSettings = async (): Promise<ExtensionSettings> => {
   const result = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
-  return result[STORAGE_KEYS.SETTINGS] ?? defaultSettings
+  const saved = result[STORAGE_KEYS.SETTINGS]
+  if (!saved) return defaultSettings
+
+  const merged: ExtensionSettings = {
+    ...defaultSettings,
+    ...saved,
+    github: { ...defaultSettings.github, ...saved.github }
+  }
+
+  if (merged.github.basePath === "leetcode-solutions") {
+    merged.github.basePath = ""
+  }
+
+  return merged
 }
 
 export const setSettings = async (settings: ExtensionSettings): Promise<void> => {

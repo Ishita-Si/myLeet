@@ -43,6 +43,33 @@ export const buildFileBody = (metadata: LeetCodeProblemMetadata, complexity: Com
 
   return `${header}\n\n${metadata.code}\n`
 }
+const BROAD_TOPIC_TAGS = new Set([
+  "Array",
+  "String",
+  "Linked List",
+  "Stack/Queue",
+  "Hashing",
+  "Tree",
+  "Heap",
+  "Graph",
+  "Recursion",
+  "Divide and Conquer",
+  "Backtracking",
+  "Greedy",
+  "Dynamic Programming",
+  "Binary Search",
+  "Two Pointers",
+  "Sliding Window",
+  "Sorting",
+  "Bit Manipulation",
+  "Math",
+  "Matrix",
+  "Trie"
+
+])
+
+const selectPrimaryTopic = (topicTags: string[]): string =>
+  topicTags.find((tag) => !BROAD_TOPIC_TAGS.has(tag)) ?? topicTags[0] ?? "Uncategorized"
 
 const nextFileName = (existingNames: string[], baseName: string, ext: string): string => {
   let suffix = 1
@@ -58,8 +85,9 @@ export const uploadSubmission = async (config: GithubConfig, metadata: LeetCodeP
   const client = new GithubClient(config)
   await client.validateTokenAndRepo()
 
-  const folder = toTitleCase(metadata.topicTags[0] ?? "Uncategorized")
-  const directory = `${config.basePath}/${sanitizeFilename(folder)}`
+  const folder = toTitleCase(selectPrimaryTopic(metadata.topicTags))
+  const topicFolder = sanitizeFilename(folder)
+  const directory = config.basePath ? `${config.basePath}/${topicFolder}` : topicFolder
   const ext = extensionFromLanguage(metadata.language)
   const baseName = sanitizeFilename(metadata.title)
 

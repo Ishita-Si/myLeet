@@ -10,5 +10,5 @@ export const githubSettingsSchema = z.object({
   owner: z.string().min(1),
   repo: z.string().min(1),
   branch: z.string().min(1),
-  basePath: z.string().min(1)
+  basePath: z.string()
 })
